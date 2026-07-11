@@ -2,40 +2,15 @@ import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import type { Browser } from 'playwright'
-import { discoverPage } from './browserDiscovery.js'
-import { fetchRaw, type FetchDeps } from './fetchResource.js'
-import { scanHtmlForResources } from './htmlResourceScan.js'
-import { ResourceStore } from './resourceStore.js'
-import { urlToLocalPath } from './urlPathMapping.js'
+import type { CapturedResourceRecord, CapturePageOptions, PageCaptureResult } from '../models/capturePage.model.js'
+import type { FetchDeps } from '../models/fetchResource.model.js'
+import type { ResourceStorePort } from '../models/resourceStore.model.js'
+import { scanHtmlForResources } from '../functions/htmlResourceScan.function.js'
+import { urlToLocalPath } from '../functions/urlPathMapping.function.js'
+import { discoverPage } from './browserDiscovery.service.js'
+import { fetchRaw } from './fetchResource.service.js'
 
-export interface CapturedResourceRecord {
-  url: string
-  localPath: string
-  bytes: number
-}
-
-export interface PageCaptureResult {
-  pageUrl: string
-  status: 'captured' | 'degraded' | 'failed'
-  localHtmlPath: string | null
-  resources: CapturedResourceRecord[]
-  sameOriginLinks: string[]
-  /** Path under metaDir (never the archive's site/ tree) — Tier 2's input only. */
-  renderedDomPath: string | null
-  warnings: string[]
-}
-
-export interface CapturePageOptions {
-  pageUrl: string
-  siteOrigin: string
-  /** Becomes the zip — only ever written to by this function's resource store. */
-  siteDir: string
-  /** Sibling of siteDir, never bundled into the archive. */
-  metaDir: string
-  store: ResourceStore
-  browser: Browser
-  fetchDeps?: FetchDeps
-}
+export type { CapturePageOptions } from '../models/capturePage.model.js'
 
 const PER_PAGE_TIMEOUT_MS = 20000
 
@@ -64,7 +39,7 @@ async function captureOnce(args: {
   pageUrl: string
   siteOrigin: string
   metaDir: string
-  store: ResourceStore
+  store: ResourceStorePort
   browser: Browser
   fetchDeps: FetchDeps | undefined
   warnings: string[]
@@ -124,7 +99,7 @@ async function captureOnce(args: {
 async function captureOneResource(
   absoluteUrl: string,
   siteOrigin: string,
-  store: ResourceStore,
+  store: ResourceStorePort,
   resources: CapturedResourceRecord[],
   warnings: string[],
   fetchDeps: FetchDeps | undefined,

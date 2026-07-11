@@ -1,11 +1,7 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-
-export interface WriteResult {
-  localPath: string
-  wasNew: boolean
-}
+import type { ResourceStorePort, WriteResult } from '../models/resourceStore.model.js'
 
 /**
  * Persists captured resource bodies under a site workspace directory with
@@ -19,7 +15,7 @@ export interface WriteResult {
  * whose sanitized paths differ only by case would otherwise silently
  * overwrite each other.
  */
-export class ResourceStore {
+export class ResourceStore implements ResourceStorePort {
   private readonly byUrl = new Map<string, string>()
   private readonly claimedByLowerPath = new Map<string, string>()
 

@@ -4,10 +4,10 @@ import path from 'node:path'
 import { chromium, type Browser } from 'playwright'
 import { Agent } from 'undici'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { capturePage } from './capturePage.js'
-import { ResourceStore } from './resourceStore.js'
-import type { SafeFetchTarget } from './ssrf.js'
-import { startFixtureServer, type FixtureServer } from './testUtils/fixtureServer.js'
+import type { SafeFetchTarget } from '../models/ssrf.model.js'
+import { startFixtureServer, type FixtureServer } from '../testUtils/fixtureServer.js'
+import { capturePage } from './capturePage.service.js'
+import { ResourceStore } from './resourceStore.service.js'
 
 const permissiveResolver = async (rawUrl: string): Promise<SafeFetchTarget> => ({
   url: new URL(rawUrl),

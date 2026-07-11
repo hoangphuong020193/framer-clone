@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { urlToLocalPath } from './urlPathMapping.js'
+import { urlToLocalPath } from './urlPathMapping.function.js'
 
 const SITE_ORIGIN = 'https://example.framer.website'
 

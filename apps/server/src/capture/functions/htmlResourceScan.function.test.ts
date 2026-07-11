@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { scanHtmlForResources } from './htmlResourceScan.js'
+import { scanHtmlForResources } from './htmlResourceScan.function.js'
 
 const BASE_URL = 'https://example.framer.website/'
 

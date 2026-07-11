@@ -1,8 +1,9 @@
 import { Agent } from 'undici'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { fetchRaw, type FetchDeps } from './fetchResource.js'
-import { SsrfBlockedError, type SafeFetchTarget } from './ssrf.js'
-import { startFixtureServer, type FixtureServer } from './testUtils/fixtureServer.js'
+import type { FetchDeps } from '../models/fetchResource.model.js'
+import { SsrfBlockedError, type SafeFetchTarget } from '../models/ssrf.model.js'
+import { startFixtureServer, type FixtureServer } from '../testUtils/fixtureServer.js'
+import { fetchRaw } from './fetchResource.service.js'
 
 const permissiveResolver = async (rawUrl: string): Promise<SafeFetchTarget> => ({
   url: new URL(rawUrl),

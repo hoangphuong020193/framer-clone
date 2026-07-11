@@ -1,20 +1,6 @@
-import { resolveSafeFetchTarget, type SafeFetchTarget } from './ssrf.js'
 import { fetch as undiciFetch } from 'undici'
-
-export interface FetchedResource {
-  finalUrl: string
-  status: number
-  contentType: string | null
-  body: Buffer
-  /** URLs visited before the final response, in order — recorded, not persisted as bytes. */
-  redirectChain: string[]
-}
-
-export interface FetchDeps {
-  resolveTarget?: (url: string) => Promise<SafeFetchTarget>
-  /** Override for testing the streamed size cap without transferring real gigabytes. */
-  maxResponseBytes?: number
-}
+import type { FetchDeps, FetchedResource } from '../models/fetchResource.model.js'
+import { resolveSafeFetchTarget } from './ssrf.service.js'
 
 const MAX_REDIRECTS = 5
 // Per-resource safety cap so a malicious/misbehaving origin can't exhaust

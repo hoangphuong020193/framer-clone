@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { resolveSafeFetchTarget, safeFetch, SsrfBlockedError, type LookupAddress } from './ssrf.js'
+import { SsrfBlockedError, type LookupAddress } from '../models/ssrf.model.js'
+import { resolveSafeFetchTarget, safeFetch } from './ssrf.service.js'
 
 function lookupReturning(addresses: LookupAddress[]) {
   return async () => addresses

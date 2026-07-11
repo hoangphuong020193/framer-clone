@@ -1,15 +1,7 @@
 import type { Browser } from 'playwright'
-import type { FetchDeps } from './fetchResource.js'
-import { resolveSafeFetchTarget } from './ssrf.js'
-
-export interface DiscoveryResult {
-  /** Resource URLs the browser actually requested and got a final (non-redirect) response for. */
-  observedResourceUrls: Set<string>
-  /** URLs the browser fetched via a 206 Partial Content response — must be re-fetched whole. */
-  rangeRequestedUrls: Set<string>
-  sameOriginLinks: string[]
-  renderedHtml: string
-}
+import type { DiscoveryResult } from '../models/browserDiscovery.model.js'
+import type { FetchDeps } from '../models/fetchResource.model.js'
+import { resolveSafeFetchTarget } from './ssrf.service.js'
 
 const NAVIGATION_TIMEOUT_MS = 15000
 const SETTLE_AFTER_SCROLL_MS = 1500

@@ -1,12 +1,8 @@
 import http from 'node:http'
 import type { AddressInfo } from 'node:net'
+import type { FixtureServer, RouteHandler } from './fixtureServer.model.js'
 
-export type RouteHandler = (req: http.IncomingMessage, res: http.ServerResponse) => void
-
-export interface FixtureServer {
-  baseUrl: string
-  close: () => Promise<void>
-}
+export type { FixtureServer, RouteHandler } from './fixtureServer.model.js'
 
 /** Minimal local HTTP fixture server for capture-pipeline tests — no real network calls. */
 export async function startFixtureServer(routes: Record<string, RouteHandler>): Promise<FixtureServer> {

@@ -1,11 +1,5 @@
 import * as cheerio from 'cheerio'
-
-export type ResourceKind = 'image' | 'script' | 'stylesheet-link' | 'other'
-
-export interface ScannedResource {
-  absoluteUrl: string
-  kind: ResourceKind
-}
+import type { ResourceKind, ScannedResource } from '../models/htmlResourceScan.model.js'
 
 const CSS_URL_PATTERN = /url\(\s*(['"]?)([^'")]+)\1\s*\)/g
 

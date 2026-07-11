@@ -1,9 +1,9 @@
 import { chromium, type Browser } from 'playwright'
 import { Agent } from 'undici'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { discoverPage } from './browserDiscovery.js'
-import { SsrfBlockedError, type SafeFetchTarget } from './ssrf.js'
-import { startFixtureServer, type FixtureServer } from './testUtils/fixtureServer.js'
+import { SsrfBlockedError, type SafeFetchTarget } from '../models/ssrf.model.js'
+import { startFixtureServer, type FixtureServer } from '../testUtils/fixtureServer.js'
+import { discoverPage } from './browserDiscovery.service.js'
 
 const permissiveResolver = async (rawUrl: string): Promise<SafeFetchTarget> => ({
   url: new URL(rawUrl),
