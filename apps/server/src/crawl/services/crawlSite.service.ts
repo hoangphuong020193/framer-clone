@@ -4,6 +4,7 @@ import { ResourceStore } from '../../capture/services/resourceStore.service.js'
 import { normalizePageUrl } from '../functions/normalizeUrl.function.js'
 import { capturedPageEntry, failedPageEntry, skippedBudgetPageEntry } from '../functions/pageReportEntry.function.js'
 import type { CrawlPageReportEntry, CrawlReport, CrawlSiteOptions } from '../models/crawl.model.js'
+import { repairWorkspace } from '../../repair/services/repairWorkspace.service.js'
 import { writeCaptureReport } from './crawlReportFile.service.js'
 import { discoverSitemapUrls } from './sitemap.service.js'
 import { createWallClockQueue } from './wallClockQueue.service.js'
@@ -116,6 +117,15 @@ export async function crawlSite(opts: CrawlSiteOptions): Promise<CrawlReport> {
 
   await queue.onIdle()
   queue.stop()
+
+  // Best-effort: a repair failure must not lose an otherwise-successful
+  // crawl. Raw captured files are left as-is (still browsable, just with
+  // absolute live-site references) if this throws.
+  try {
+    await repairWorkspace(siteDir, siteOrigin)
+  } catch (error: unknown) {
+    console.error(`Repair pass failed for ${siteDir}, serving raw captured files instead:`, error)
+  }
 
   const finishedAt = new Date().toISOString()
   const trippedWallClock = queue.isTripped()

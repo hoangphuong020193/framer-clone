@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { chromium, type Browser } from 'playwright'
 import { Agent } from 'undici'
-import { afterEach, beforeAll, afterAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, afterAll, describe, expect, it, vi } from 'vitest'
 import type { SafeFetchTarget } from '../../capture/models/ssrf.model.js'
 import { startFixtureServer } from '../../capture/testUtils/fixtureServer.js'
 import { CAPTURE_REPORT_FILENAME, crawlSite } from './crawlSite.service.js'
@@ -33,7 +33,10 @@ describe('crawlSite', () => {
     const server = await startFixtureServer({
       '/': (_req, res) => {
         res.writeHead(200, { 'content-type': 'text/html' })
-        res.end('<html><body><a href="/about">About</a><a href="/contact">Contact</a></body></html>')
+        // Absolute href on purpose: proves repair rewrites it to a
+        // root-relative path rather than merely leaving an already-relative
+        // href unchanged.
+        res.end(`<html><body><a href="${server.baseUrl}/about">About</a><a href="/contact">Contact</a></body></html>`)
       },
       '/about': (_req, res) => {
         res.writeHead(200, { 'content-type': 'text/html' })
@@ -88,8 +91,59 @@ describe('crawlSite', () => {
 
       const reportOnDisk = JSON.parse(await readFile(path.join(siteDir, CAPTURE_REPORT_FILENAME), 'utf-8'))
       expect(reportOnDisk).toEqual(report)
+
+      // Phase 4 repair pass: bundled locally, and the home page's internal
+      // links rewritten to root-relative paths rather than the live origin.
+      const serveScript = await readFile(path.join(siteDir, 'serve.cjs'), 'utf-8')
+      expect(serveScript).toContain('http.createServer')
+      const homeHtml = await readFile(path.join(siteDir, 'index.html'), 'utf-8')
+      expect(homeHtml).toContain('href="/about"')
+      expect(homeHtml).toContain('href="/contact"')
+      expect(homeHtml).not.toContain(server.baseUrl)
     } finally {
       await server.close()
+    }
+  })
+
+  it('degrades gracefully and still writes a report when the repair pass throws', async () => {
+    const server = await startFixtureServer({
+      '/': (_req, res) => {
+        res.writeHead(200, { 'content-type': 'text/html' })
+        res.end('<html><body>home</body></html>')
+      },
+    })
+
+    try {
+      workDir = await mkdtemp(path.join(tmpdir(), 'crawl-site-'))
+      const siteDir = path.join(workDir, 'site')
+      const metaDir = path.join(workDir, '_meta')
+
+      vi.doMock('../../repair/services/repairWorkspace.service.js', () => ({
+        repairWorkspace: vi.fn(async () => {
+          throw new Error('repair boom')
+        }),
+      }))
+      vi.resetModules()
+      const { crawlSite: crawlSiteWithFailingRepair } = await import('./crawlSite.service.js')
+
+      const report = await crawlSiteWithFailingRepair({
+        entryUrl: `${server.baseUrl}/`,
+        siteDir,
+        metaDir,
+        browser,
+        fetchDeps: { resolveTarget: permissiveResolver },
+      })
+
+      expect(report.status).toBe('complete')
+      expect(report.pages).toHaveLength(1)
+      expect(report.pages[0]?.status).toBe('captured')
+
+      const reportOnDisk = JSON.parse(await readFile(path.join(siteDir, CAPTURE_REPORT_FILENAME), 'utf-8'))
+      expect(reportOnDisk).toEqual(report)
+    } finally {
+      await server.close()
+      vi.doUnmock('../../repair/services/repairWorkspace.service.js')
+      vi.resetModules()
     }
   })
 
