@@ -105,6 +105,49 @@ describe('crawlSite', () => {
     }
   })
 
+  it('captures only the entry page in single-page mode, ignoring the sitemap and links', async () => {
+    const server = await startFixtureServer({
+      '/': (_req, res) => {
+        res.writeHead(200, { 'content-type': 'text/html' })
+        res.end('<html><body><a href="/about">About</a><a href="/contact">Contact</a></body></html>')
+      },
+      '/about': (_req, res) => {
+        res.writeHead(200, { 'content-type': 'text/html' })
+        res.end('<html><body>about</body></html>')
+      },
+      '/sitemap.xml': (_req, res) => {
+        res.writeHead(200, { 'content-type': 'application/xml' })
+        res.end(`<?xml version="1.0" encoding="UTF-8"?>
+          <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+            <url><loc>${server.baseUrl}/</loc></url>
+            <url><loc>${server.baseUrl}/about</loc></url>
+          </urlset>`)
+      },
+    })
+
+    try {
+      workDir = await mkdtemp(path.join(tmpdir(), 'crawl-site-'))
+      const siteDir = path.join(workDir, 'site')
+      const metaDir = path.join(workDir, '_meta')
+
+      const report = await crawlSite({
+        entryUrl: `${server.baseUrl}/`,
+        siteDir,
+        metaDir,
+        browser,
+        mode: 'single-page',
+        fetchDeps: { resolveTarget: permissiveResolver },
+      })
+
+      expect(report.status).toBe('complete')
+      expect(report.pages).toHaveLength(1)
+      expect(report.pages[0]?.url).toBe(`${server.baseUrl}/`)
+      expect(report.totalPagesDiscovered).toBe(1)
+    } finally {
+      await server.close()
+    }
+  })
+
   it('degrades gracefully and still writes a report when the repair pass throws', async () => {
     const server = await startFixtureServer({
       '/': (_req, res) => {

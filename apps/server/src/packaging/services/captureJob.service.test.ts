@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -42,12 +43,10 @@ describe('runCaptureJob', () => {
       workspaceRoot = await fs.mkdtemp(path.join(tmpdir(), 'capture-job-'))
       const registry = createWorkspaceRegistry()
 
-      const result = await runCaptureJob(`${server.baseUrl}/`, {
-        browser,
-        workspaceRoot,
-        registry,
-        fetchDeps: { resolveTarget: permissiveResolver },
-      })
+      const result = await runCaptureJob(
+        { entryUrl: `${server.baseUrl}/`, captureId: crypto.randomUUID(), mode: 'whole-site' },
+        { browser, workspaceRoot, registry, fetchDeps: { resolveTarget: permissiveResolver } },
+      )
 
       expect(result.report.status).toBe('complete')
       expect(result.report.pages[0]?.status).toBe('captured')
@@ -62,7 +61,9 @@ describe('runCaptureJob', () => {
     workspaceRoot = await fs.mkdtemp(path.join(tmpdir(), 'capture-job-'))
     const registry = createWorkspaceRegistry()
 
-    await expect(runCaptureJob('not a url', { browser, workspaceRoot, registry })).rejects.toThrow()
+    await expect(
+      runCaptureJob({ entryUrl: 'not a url', captureId: crypto.randomUUID(), mode: 'whole-site' }, { browser, workspaceRoot, registry }),
+    ).rejects.toThrow()
 
     const leftoverEntries = await fs.readdir(workspaceRoot)
     expect(leftoverEntries).toHaveLength(0)
@@ -81,13 +82,10 @@ describe('runCaptureJob', () => {
       const registry = createWorkspaceRegistry()
       const before = Date.now()
 
-      const result = await runCaptureJob(`${server.baseUrl}/`, {
-        browser,
-        workspaceRoot,
-        registry,
-        workspaceTtlMs: 1000,
-        fetchDeps: { resolveTarget: permissiveResolver },
-      })
+      const result = await runCaptureJob(
+        { entryUrl: `${server.baseUrl}/`, captureId: crypto.randomUUID(), mode: 'whole-site' },
+        { browser, workspaceRoot, registry, workspaceTtlMs: 1000, fetchDeps: { resolveTarget: permissiveResolver } },
+      )
 
       expect(result.expiresAt).toBeGreaterThanOrEqual(before + 1000)
       expect(result.expiresAt).toBeLessThan(before + 60_000)
@@ -109,8 +107,14 @@ describe('runCaptureJob', () => {
       const registry = createWorkspaceRegistry()
 
       const [first, second] = await Promise.all([
-        runCaptureJob(`${server.baseUrl}/`, { browser, workspaceRoot, registry, fetchDeps: { resolveTarget: permissiveResolver } }),
-        runCaptureJob(`${server.baseUrl}/`, { browser, workspaceRoot, registry, fetchDeps: { resolveTarget: permissiveResolver } }),
+        runCaptureJob(
+          { entryUrl: `${server.baseUrl}/`, captureId: crypto.randomUUID(), mode: 'whole-site' },
+          { browser, workspaceRoot, registry, fetchDeps: { resolveTarget: permissiveResolver } },
+        ),
+        runCaptureJob(
+          { entryUrl: `${server.baseUrl}/`, captureId: crypto.randomUUID(), mode: 'single-page' },
+          { browser, workspaceRoot, registry, fetchDeps: { resolveTarget: permissiveResolver } },
+        ),
       ])
 
       expect(first.captureId).not.toBe(second.captureId)

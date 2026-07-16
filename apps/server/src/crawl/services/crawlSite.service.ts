@@ -10,7 +10,7 @@ import { discoverSitemapUrls } from './sitemap.service.js'
 import { createWallClockQueue } from './wallClockQueue.service.js'
 import { WorkspaceBudget } from './workspaceBudget.service.js'
 
-export type { CrawlPageReportEntry, CrawlProgress, CrawlReport, CrawlSiteOptions } from '../models/crawl.model.js'
+export type { CaptureMode, CrawlPageReportEntry, CrawlProgress, CrawlReport, CrawlSiteOptions } from '../models/crawl.model.js'
 export { CAPTURE_REPORT_FILENAME } from './crawlReportFile.service.js'
 
 const DEFAULT_CONCURRENCY = 4
@@ -30,6 +30,7 @@ export async function crawlSite(opts: CrawlSiteOptions): Promise<CrawlReport> {
     siteDir,
     metaDir,
     browser,
+    mode = 'whole-site',
     concurrency = DEFAULT_CONCURRENCY,
     maxWorkspaceBytes = DEFAULT_MAX_WORKSPACE_BYTES,
     wallClockTimeoutMs = DEFAULT_WALL_CLOCK_TIMEOUT_MS,
@@ -100,7 +101,7 @@ export async function crawlSite(opts: CrawlSiteOptions): Promise<CrawlReport> {
       budget.settle(reservation.estimateBytes, bytesCaptured)
       pages.push(capturedPageEntry(pageUrl, result, bytesCaptured))
 
-      if (!queue.isTripped()) {
+      if (mode === 'whole-site' && !queue.isTripped()) {
         for (const link of result.sameOriginLinks) enqueue(link)
       }
     } catch (error: unknown) {
@@ -111,7 +112,10 @@ export async function crawlSite(opts: CrawlSiteOptions): Promise<CrawlReport> {
     }
   }
 
-  const sitemapUrls = await discoverSitemapUrls(siteOrigin, fetchDeps).catch(() => [] as string[])
+  const sitemapUrls =
+    mode === 'single-page'
+      ? []
+      : await discoverSitemapUrls(siteOrigin, fetchDeps).catch(() => [] as string[])
   enqueue(normalizedEntry)
   for (const url of sitemapUrls) enqueue(url)
 

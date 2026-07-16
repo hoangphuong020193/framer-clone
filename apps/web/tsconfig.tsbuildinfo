@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/api/captureclient.ts","./src/components/capture/captureform.tsx","./src/components/capture/progressfeed.tsx","./src/components/capture/resultpanel.tsx","./src/hooks/usecapturejob.ts","./src/types/capture.ts","./vite.config.ts"],"version":"5.9.3"}

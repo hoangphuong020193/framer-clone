@@ -1,6 +1,13 @@
 import type { Browser } from 'playwright'
 import type { FetchDeps } from '../../capture/models/fetchResource.model.js'
 
+/**
+ * `single-page` captures only the entry URL (no sitemap seeding, no
+ * link-following) — the fast common case for a single landing page.
+ * `whole-site` does the full sitemap + BFS crawl.
+ */
+export type CaptureMode = 'single-page' | 'whole-site'
+
 export interface CrawlPageReportEntry {
   url: string
   status: 'captured' | 'degraded' | 'failed' | 'skipped-budget'
@@ -59,6 +66,8 @@ export interface CrawlSiteOptions {
   /** Sibling of siteDir, never bundled into the archive (rendered-DOM snapshots). */
   metaDir: string
   browser: Browser
+  /** Defaults to `whole-site`. `single-page` skips sitemap seeding + link-following. */
+  mode?: CaptureMode
   concurrency?: number
   maxWorkspaceBytes?: number
   wallClockTimeoutMs?: number
