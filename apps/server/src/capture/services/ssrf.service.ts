@@ -48,9 +48,20 @@ export async function resolveSafeFetchTarget(
     }
   }
 
-  const pinned = addresses[0]
+  // Prefer a validated IPv4 address: dual-stack CDN hostnames (Framer sites
+  // included) often list their AAAA record first. Every address was already
+  // validated above, so choosing among them changes nothing security-wise.
+  const pinned = addresses.find((a) => a.family === 4) ?? addresses[0]
   const dispatcher = new Agent({
     connect: {
+      // Node's Happy-Eyeballs (autoSelectFamily, on by default) asks a custom
+      // `lookup` for *all* candidate addresses (`{ all: true }`) so it can race
+      // connections across them. Our lookup always replies with a single
+      // address/family pair, which Node then mishandles internally, crashing
+      // every TLS connect with `ERR_INVALID_IP_ADDRESS: Invalid IP address:
+      // undefined`. Racing is moot anyway — we deliberately pin to one already-
+      // validated IP — so disable it rather than reimplementing the array form.
+      autoSelectFamily: false,
       lookup: (_hostname, _opts, callback) => {
         callback(null, pinned.address, pinned.family as 4 | 6)
       },

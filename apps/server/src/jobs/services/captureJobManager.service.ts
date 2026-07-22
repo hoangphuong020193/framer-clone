@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import type { CrawlReport } from '../../crawl/models/crawl.model.js'
 import { DEFAULT_WORKSPACE_TTL_MS } from '../../packaging/models/packaging.model.js'
 import { runCaptureJob } from '../../packaging/services/captureJob.service.js'
 import type {
@@ -16,6 +17,22 @@ interface JobRecord {
 }
 
 const GENERIC_FAILURE_MESSAGE = 'Capture failed, please try again'
+
+/** Pages that actually wrote a browsable HTML file (so preview/download work). */
+function countUsablePages(report: CrawlReport): number {
+  return report.pages.filter((page) => page.status === 'captured' || page.status === 'degraded').length
+}
+
+/**
+ * Explains a run that finished but captured nothing browsable, surfacing the
+ * entry page's own failure reason (safe to show — it describes the target site,
+ * e.g. a navigation timeout — not server internals) so the result is actionable.
+ */
+function noCaptureMessage(report: CrawlReport): string {
+  const entry = report.pages.find((page) => page.url === report.entryUrl) ?? report.pages[0]
+  const reason = entry?.warnings.find((warning) => warning.trim() !== '')
+  return reason ? `Could not capture the page — ${reason}` : 'No pages could be captured from this site.'
+}
 
 /**
  * In-memory registry of async capture jobs. `start` kicks a background crawl
@@ -55,12 +72,24 @@ export function createCaptureJobManager(deps: CaptureJobManagerDeps): CaptureJob
           onProgress: (progress) => update(record, { progress }, 'progress'),
         },
       )
+      const { report } = result
+      const capturedCount = countUsablePages(report)
+      const progress = { captured: capturedCount, total: report.totalPagesDiscovered }
+
+      // A run can finish "complete" per the crawl's own guardrails yet still have
+      // captured nothing browsable (every page failed). There is no page to
+      // preview or archive, so surface it as a failure rather than a hollow success.
+      if (capturedCount === 0) {
+        update(record, { status: 'failed', report, progress, error: noCaptureMessage(report) }, 'failed')
+        return
+      }
+
       update(
         record,
         {
-          status: result.report.status === 'partial' ? 'partial' : 'complete',
-          report: result.report,
-          progress: { captured: result.report.pages.length, total: result.report.totalPagesDiscovered },
+          status: report.status === 'partial' ? 'partial' : 'complete',
+          report,
+          progress,
           expiresAt: result.expiresAt,
         },
         'done',

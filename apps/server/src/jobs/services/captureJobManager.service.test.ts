@@ -46,7 +46,7 @@ describe('createCaptureJobManager', () => {
         captureId: input.captureId,
         siteDir: 's',
         metaDir: 'm',
-        report: { status: 'complete', pages: [{}, {}], totalPagesDiscovered: 2 },
+        report: { status: 'complete', pages: [{ status: 'captured' }, { status: 'captured' }], totalPagesDiscovered: 2 },
         expiresAt: 4242,
       }
     })
@@ -67,13 +67,37 @@ describe('createCaptureJobManager', () => {
       captureId: 'x',
       siteDir: 's',
       metaDir: 'm',
-      report: { status: 'partial', pages: [{}], totalPagesDiscovered: 5 },
+      report: { status: 'partial', pages: [{ status: 'captured' }], totalPagesDiscovered: 5 },
       expiresAt: 1,
     })
     const manager = createCaptureJobManager(makeDeps())
     const snap = manager.start({ entryUrl: 'https://example.com', mode: 'whole-site' })
     const events = await collectUntilTerminal(manager, snap.captureId)
     expect(events[events.length - 1].snapshot.status).toBe('partial')
+  })
+
+  it('fails a run that captured no browsable pages and surfaces the entry reason', async () => {
+    runCaptureJobMock.mockResolvedValue({
+      captureId: 'x',
+      siteDir: 's',
+      metaDir: 'm',
+      report: {
+        status: 'complete',
+        entryUrl: 'https://example.com/',
+        totalPagesDiscovered: 1,
+        pages: [{ url: 'https://example.com/', status: 'failed', warnings: ['navigation timeout of 30000 ms exceeded'] }],
+      },
+      expiresAt: 5,
+    })
+    const manager = createCaptureJobManager(makeDeps())
+    const snap = manager.start({ entryUrl: 'https://example.com', mode: 'whole-site' })
+    const events = await collectUntilTerminal(manager, snap.captureId)
+
+    const terminal = events[events.length - 1]
+    expect(terminal.type).toBe('failed')
+    expect(terminal.snapshot.status).toBe('failed')
+    expect(terminal.snapshot.error).toContain('navigation timeout of 30000 ms exceeded')
+    expect(terminal.snapshot.progress).toEqual({ captured: 0, total: 1 })
   })
 
   it('emits a generic error with no internal detail when the job throws', async () => {
@@ -94,7 +118,7 @@ describe('createCaptureJobManager', () => {
       captureId: 'x',
       siteDir: 's',
       metaDir: 'm',
-      report: { status: 'complete', pages: [], totalPagesDiscovered: 0 },
+      report: { status: 'complete', pages: [{ status: 'captured' }], totalPagesDiscovered: 1 },
       expiresAt: 0,
     })
     const manager = createCaptureJobManager(makeDeps())
@@ -108,7 +132,7 @@ describe('createCaptureJobManager', () => {
       captureId: 'x',
       siteDir: 's',
       metaDir: 'm',
-      report: { status: 'complete', pages: [], totalPagesDiscovered: 0 },
+      report: { status: 'complete', pages: [{ status: 'captured' }], totalPagesDiscovered: 1 },
       expiresAt: 0,
     })
     const manager = createCaptureJobManager(makeDeps())

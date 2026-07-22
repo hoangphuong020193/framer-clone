@@ -106,6 +106,9 @@ export async function crawlSite(opts: CrawlSiteOptions): Promise<CrawlReport> {
       }
     } catch (error: unknown) {
       budget.settle(reservation.estimateBytes, 0)
+      // Log so a capture that produces an empty workspace is diagnosable — the
+      // reason is otherwise only stored in the page's report `warnings`.
+      console.error(`Page capture failed for ${pageUrl}:`, error)
       pages.push(failedPageEntry(pageUrl, error))
     } finally {
       reportProgress()
