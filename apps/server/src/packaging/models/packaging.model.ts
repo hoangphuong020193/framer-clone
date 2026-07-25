@@ -10,6 +10,7 @@ export interface WorkspaceRecord {
   captureId: string
   siteDir: string
   metaDir: string
+  entryUrl: string
   expiresAt: number
 }
 
@@ -17,6 +18,7 @@ export interface RegisterWorkspaceInput {
   captureId: string
   siteDir: string
   metaDir: string
+  entryUrl: string
   ttlMs: number
 }
 

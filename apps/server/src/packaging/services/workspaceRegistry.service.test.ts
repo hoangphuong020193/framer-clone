@@ -24,7 +24,7 @@ describe('createWorkspaceRegistry', () => {
 
   it('registers a workspace and returns it via get()', () => {
     const registry = createWorkspaceRegistry()
-    const record = registry.register({ captureId: 'abc', siteDir, metaDir, ttlMs: 60_000 })
+    const record = registry.register({ captureId: 'abc', siteDir, metaDir, entryUrl: 'https://example.com', ttlMs: 60_000 })
 
     expect(registry.get('abc')).toEqual(record)
     expect(record.expiresAt).toBeGreaterThan(Date.now())
@@ -37,7 +37,7 @@ describe('createWorkspaceRegistry', () => {
 
   it('cleanupNow removes both directories and drops the record', async () => {
     const registry = createWorkspaceRegistry()
-    registry.register({ captureId: 'abc', siteDir, metaDir, ttlMs: 60_000 })
+    registry.register({ captureId: 'abc', siteDir, metaDir, entryUrl: 'https://example.com', ttlMs: 60_000 })
 
     await registry.cleanupNow('abc')
 
@@ -53,7 +53,7 @@ describe('createWorkspaceRegistry', () => {
 
   it('auto-cleans up the workspace once its TTL elapses', async () => {
     const registry = createWorkspaceRegistry()
-    registry.register({ captureId: 'abc', siteDir, metaDir, ttlMs: 50 })
+    registry.register({ captureId: 'abc', siteDir, metaDir, entryUrl: 'https://example.com', ttlMs: 50 })
 
     // Poll the filesystem itself rather than registry.get() — the registry
     // drops its record synchronously at the start of cleanupNow, before the
@@ -78,7 +78,7 @@ describe('createWorkspaceRegistry', () => {
 
   it('handles two concurrent cleanupNow calls for the same captureId without throwing', async () => {
     const registry = createWorkspaceRegistry()
-    registry.register({ captureId: 'abc', siteDir, metaDir, ttlMs: 60_000 })
+    registry.register({ captureId: 'abc', siteDir, metaDir, entryUrl: 'https://example.com', ttlMs: 60_000 })
 
     await Promise.all([registry.cleanupNow('abc'), registry.cleanupNow('abc')])
 
@@ -88,7 +88,7 @@ describe('createWorkspaceRegistry', () => {
 
   it('does not let a manual cleanupNow race the TTL timer into a double-delete error', async () => {
     const registry = createWorkspaceRegistry()
-    registry.register({ captureId: 'abc', siteDir, metaDir, ttlMs: 30 })
+    registry.register({ captureId: 'abc', siteDir, metaDir, entryUrl: 'https://example.com', ttlMs: 30 })
 
     await registry.cleanupNow('abc')
     await new Promise((resolve) => setTimeout(resolve, 100))

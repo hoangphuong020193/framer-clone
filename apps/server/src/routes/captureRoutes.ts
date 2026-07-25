@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { formatSseEvent } from '../jobs/functions/sseFormat.function.js'
+import { buildDownloadFilename } from '../packaging/functions/downloadFilename.function.js'
 import { parseCaptureMode } from '../packaging/functions/parseCaptureMode.function.js'
 import { parseCaptureUrl } from '../packaging/functions/parseCaptureUrl.function.js'
 import { readPreviewFile } from '../packaging/services/previewWorkspace.service.js'
@@ -65,7 +66,7 @@ export function createCaptureRoutes(deps: CaptureRoutesDeps): Router {
 
     res.status(200)
     res.setHeader('Content-Type', 'application/zip')
-    res.setHeader('Content-Disposition', 'attachment; filename="capture.zip"')
+    res.setHeader('Content-Disposition', `attachment; filename="${buildDownloadFilename(record.entryUrl)}"`)
     try {
       await streamWorkspaceZip(record.siteDir, res)
     } catch (error: unknown) {

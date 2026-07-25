@@ -24,7 +24,7 @@ export async function runCaptureJob(input: CaptureJobInput, deps: CaptureJobDeps
 
   try {
     const report = await crawlSite({ entryUrl, siteDir, metaDir, browser, mode, onProgress, fetchDeps })
-    const record = registry.register({ captureId, siteDir, metaDir, ttlMs: workspaceTtlMs })
+    const record = registry.register({ captureId, siteDir, metaDir, entryUrl, ttlMs: workspaceTtlMs })
     return { captureId, siteDir, metaDir, report, expiresAt: record.expiresAt }
   } catch (error: unknown) {
     await fs.rm(jobDir, { recursive: true, force: true })

@@ -9,7 +9,7 @@ vi.mock('../../packaging/services/captureJob.service.js', () => ({ runCaptureJob
 const { createCaptureJobManager } = await import('./captureJobManager.service.js')
 
 const registry: WorkspaceRegistry = {
-  register: () => ({ captureId: 'x', siteDir: 's', metaDir: 'm', expiresAt: 0 }),
+  register: () => ({ captureId: 'x', siteDir: 's', metaDir: 'm', entryUrl: 'https://example.com', expiresAt: 0 }),
   get: () => undefined,
   cleanupNow: async () => {},
 }

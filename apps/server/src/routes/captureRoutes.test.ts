@@ -113,7 +113,7 @@ describe('capture routes', () => {
     await fs.writeFile(path.join(siteDir, 'index.html'), '<html><body>home</body></html>')
 
     const registry = createWorkspaceRegistry()
-    registry.register({ captureId: CAPTURE_ID, siteDir, metaDir, ttlMs: 60_000 })
+    registry.register({ captureId: CAPTURE_ID, siteDir, metaDir, entryUrl: 'https://example.com', ttlMs: 60_000 })
 
     const response = await request(buildApp(fakeManager(), registry))
       .get(`/api/capture/${CAPTURE_ID}/download`)
@@ -126,6 +126,7 @@ describe('capture routes', () => {
 
     expect(response.status).toBe(200)
     expect(response.headers['content-type']).toBe('application/zip')
+    expect(response.headers['content-disposition']).toBe('attachment; filename="example.com.zip"')
     expect((response.body as Buffer).subarray(0, 4)).toEqual(ZIP_LOCAL_FILE_HEADER_MAGIC)
   })
 
@@ -137,7 +138,7 @@ describe('capture routes', () => {
     await fs.writeFile(path.join(siteDir, 'index.html'), '<html><body><img src="/framerusercontent.com/x.png"></body></html>')
 
     const registry = createWorkspaceRegistry()
-    registry.register({ captureId: CAPTURE_ID, siteDir, metaDir, ttlMs: 60_000 })
+    registry.register({ captureId: CAPTURE_ID, siteDir, metaDir, entryUrl: 'https://example.com', ttlMs: 60_000 })
 
     const response = await request(buildApp(fakeManager(), registry)).get(`/api/capture/${CAPTURE_ID}/preview/`)
 
@@ -154,7 +155,7 @@ describe('capture routes', () => {
     await fs.writeFile(path.join(siteDir, 'framerusercontent.com', 'x.png'), Buffer.alloc(10, 1))
 
     const registry = createWorkspaceRegistry()
-    registry.register({ captureId: CAPTURE_ID, siteDir, metaDir, ttlMs: 60_000 })
+    registry.register({ captureId: CAPTURE_ID, siteDir, metaDir, entryUrl: 'https://example.com', ttlMs: 60_000 })
     const app = buildApp(fakeManager(), registry)
 
     const asset = await request(app).get(`/api/capture/${CAPTURE_ID}/preview/framerusercontent.com/x.png`)

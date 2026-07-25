@@ -31,6 +31,7 @@ export function createWorkspaceRegistry(): WorkspaceRegistry {
       captureId: input.captureId,
       siteDir: input.siteDir,
       metaDir: input.metaDir,
+      entryUrl: input.entryUrl,
       expiresAt: Date.now() + input.ttlMs,
     }
     records.set(input.captureId, record)
