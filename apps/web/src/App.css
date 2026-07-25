@@ -365,21 +365,26 @@
   font-size: var(--text-sm);
 }
 
-.preview-frame {
-  position: relative;
-  aspect-ratio: 16 / 10;
-  border-radius: var(--radius);
-  overflow: hidden;
+.preview {
+  padding: var(--space-3) var(--space-5);
+  font-weight: 640;
+  text-decoration: none;
+  color: var(--color-text);
+  background: transparent;
   border: 1px solid var(--color-border-strong);
-  background: oklch(98% 0 0);
+  border-radius: var(--radius);
+  transition: transform var(--duration) var(--ease), background var(--duration) var(--ease);
 }
 
-.preview-frame iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
+.preview:hover {
+  background: var(--color-surface-raised);
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.preview:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px oklch(84% 0.19 128 / 0.3);
 }
 
 .result-actions {

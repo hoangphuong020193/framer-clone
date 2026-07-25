@@ -53,13 +53,10 @@ export function ResultPanel({ phase, snapshot, error, onReset }: ResultPanelProp
         </ul>
       )}
 
-      <div className="preview-frame">
-        {/* allow-scripts (no allow-same-origin) renders the captured page in an
-            opaque origin: its third-party JS runs but can't script this app. */}
-        <iframe title="Captured site preview" src={capturePreviewUrl(captureId)} sandbox="allow-scripts" />
-      </div>
-
       <div className="result-actions">
+        <a className="preview" href={capturePreviewUrl(captureId)} target="_blank" rel="noopener noreferrer">
+          Preview
+        </a>
         <a className="download" href={captureDownloadUrl(captureId)}>
           Download .zip
         </a>
