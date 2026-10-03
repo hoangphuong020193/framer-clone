@@ -33,5 +33,25 @@
     allow="fullscreen"
     loading="lazy"
   ></iframe>
+  <script>
+  (function() {
+    const hideBadge = () => {
+      const badge = document.querySelector('#__framer-badge-container');
+      if (badge) {
+        badge.style.setProperty('display', 'none', 'important');
+        // Optional: Remove it entirely from the DOM
+        badge.remove();
+      }
+    };
+
+    // Run every 100ms for the first 3 seconds to catch it
+    const interval = setInterval(hideBadge, 100);
+    setTimeout(() => clearInterval(interval), 3000);
+
+    // Also run on any DOM changes
+    const observer = new MutationObserver(hideBadge);
+    observer.observe(document.body, { childList: true, subtree: true });
+  })();
+</script>
 </body>
 </html>
